@@ -1,71 +1,109 @@
 package com.sim.service.impl;
 
+import com.sim.enums.WebsiteEnum;
 import com.sim.service.GetBookService;
+import com.sim.utils.ChangeIP;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.PostMethod;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.springframework.http.HttpStatus;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.io.InputStreamReader;
 
 /**
  * Created by hyj on 2018年08月13日
  */
 public class GetBookServiceImpl implements GetBookService {
 
-    public static String readUrl(String url) {
-        InputStream inputStream = null;
-        BufferedInputStream bis = null;
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+
+    public static Document readUrl(String url) {
+        //创建httpclient工具对象
+        HttpClient client = new HttpClient();
+        //创建post请求方法
+        PostMethod myPost = new PostMethod(url);
+        //设置请求超时时间
+        client.setConnectionTimeout(5000);
+        String responseString = null;
         try {
-            inputStream = new URL(url).openConnection().getInputStream();//爬取的网址、这里爬取的是一个生物网站
-            bis = new BufferedInputStream(inputStream);
-            int len;
-            byte[] arr = new byte[1024];
-            while ((len = bis.read(arr)) != -1) {
-                bos.write(arr, 0, len);
-                bos.flush();
+            //设置请求头部类型
+            myPost.setRequestHeader("Content-Type", "application/json");
+            myPost.setRequestHeader("charset", "utf-8");
+            int statusCode = client.executeMethod(myPost);
+            //只有请求成功200了，才做处理
+            if (statusCode == HttpStatus.OK.value()) {
+                InputStream inputStream = myPost.getResponseBodyAsStream();
+                BufferedReader br = new BufferedReader(new InputStreamReader(inputStream, "utf-8"));
+                StringBuffer stringBuffer = new StringBuffer();
+                String str = "";
+                while ((str = br.readLine()) != null) {
+                    stringBuffer.append(str);
+                }
+                responseString = stringBuffer.toString();
+                Document document =Jsoup.parse(responseString);
+                return document;
             }
-            return bos.toString();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            try {
-                bos.close();
-                bis.close();
-                inputStream.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+            myPost.releaseConnection();
+        }
+        return null;
+    }
+
+
+    public static String readListHtml(WebsiteEnum websiteEnum,String url) {
+        Document doc = null;
+        try {
+            doc = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36").cookie("auth", "token").timeout(5000).get();
+
+            String imgUrl = doc.select("div[id=fmimg]").select("img").attr("src").toString();
+            String bookName = doc.select("div[id=info]").select("h1").text();
+            String author = doc.select("div[id=info]").select("p:contains(作者)").text();//作者
+            String category = doc.select("div[id=info]").select("p:contains(类别)").text();//类别
+            String status = doc.select("div[id=info]").select("p:contains(状态)").text();//状态
+            String turnTime = doc.select("div[id=info]").select("p:contains(更新时间)").text();//更新时间
+            String hits = doc.select("div[id=info]").select("p:contains(点击数)").text();//点击数
+            String collec = doc.select("div[id=info]").select("p:contains(收藏量)").text();//收藏量
+            //获取html标签中的内容
+            Elements elements = doc.select(".info_chapterlist:has(li)").select("li");
+            for (Element ele : elements) {
+                String eleUrl = ele.select("li").select("a").attr("href");
+                System.out.println(eleUrl);
+                readParentHtml(websiteEnum,eleUrl);
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            ChangeIP.changeMyIp();
+            readListHtml(websiteEnum, url);
         }
         return "";
     }
 
-    public static String readHtml(String url) {
+    public static void readParentHtml(WebsiteEnum websiteEnum, String url) {
+        String tUrl = "";
+        if (websiteEnum == WebsiteEnum.BOOKBAO) {
+            tUrl = "https://www.bookbao8.com";
+        }
+        url = tUrl + url;
         Document doc = null;
         try {
             doc = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 6.1; rv:5.0)").cookie("auth", "token").timeout(3000).get();
+            String text = doc.select("text").text();
 
-            String imgUrl = doc.select("div[id=fmimg]").select("img").attr("src").toString();
-            String bookName = doc.select("div[id=info]").select("h1").val();
-            //获取html标签中的内容
-            Elements elements = doc.select("div[id=fmimg]").select("li[class=gl-item]");
-            for (Element ele : elements) {
-                String bookID = ele.attr("data-sku");
-                String bookPrice = ele.select("div[class=p-price]").select("strong").select("i").text();
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "";
     }
 
     public static void main(String[] args) {
 //        String html = readUrl("https://www.bookbao8.com/book/201805/29/id_XNTk5NTMz.html");
-        readHtml("https://www.bookbao8.com/book/201805/29/id_XNTk5NTMz.html");
+        readListHtml(WebsiteEnum.BOOKBAO,"https://www.bookbao8.com/book/201805/29/id_XNTk5NTMz.html");
+
     }
 }
