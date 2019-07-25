@@ -1,8 +1,10 @@
 package com.sim.service.impl;
 
-import com.sim.enums.WebsiteEnum;
-import com.sim.service.GetBookService;
+import com.sim.enums.WebsiteChannel;
+import com.sim.model.CommonModel;
+import com.sim.service.BookService;
 import com.sim.utils.ChangeIP;
+import com.sim.utils.ResponseObj;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.methods.PostMethod;
 import org.jsoup.Jsoup;
@@ -19,7 +21,7 @@ import java.io.InputStreamReader;
 /**
  * Created by hyj on 2018年08月13日
  */
-public class GetBookServiceImpl implements GetBookService {
+public class GetBookServiceImpl implements BookService {
 
 
     public static Document readUrl(String url) {
@@ -45,7 +47,7 @@ public class GetBookServiceImpl implements GetBookService {
                     stringBuffer.append(str);
                 }
                 responseString = stringBuffer.toString();
-                Document document =Jsoup.parse(responseString);
+                Document document = Jsoup.parse(responseString);
                 return document;
             }
         } catch (Exception e) {
@@ -57,7 +59,7 @@ public class GetBookServiceImpl implements GetBookService {
     }
 
 
-    public static String readListHtml(WebsiteEnum websiteEnum,String url) {
+    public static String readListHtml(WebsiteChannel websiteChannel, String url) {
         Document doc = null;
         try {
             doc = Jsoup.connect(url).userAgent("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.94 Safari/537.36").cookie("auth", "token").timeout(5000).get();
@@ -75,19 +77,19 @@ public class GetBookServiceImpl implements GetBookService {
             for (Element ele : elements) {
                 String eleUrl = ele.select("li").select("a").attr("href");
                 System.out.println(eleUrl);
-                readParentHtml(websiteEnum,eleUrl);
+                readParentHtml(websiteChannel, eleUrl);
             }
         } catch (Exception e) {
             e.printStackTrace();
             ChangeIP.changeMyIp();
-            readListHtml(websiteEnum, url);
+            readListHtml(websiteChannel, url);
         }
         return "";
     }
 
-    public static void readParentHtml(WebsiteEnum websiteEnum, String url) {
+    public static void readParentHtml(WebsiteChannel websiteChannel, String url) {
         String tUrl = "";
-        if (websiteEnum == WebsiteEnum.BOOKBAO) {
+        if (websiteChannel == WebsiteChannel.BOOKBAO) {
             tUrl = "https://www.bookbao8.com";
         }
         url = tUrl + url;
@@ -103,7 +105,12 @@ public class GetBookServiceImpl implements GetBookService {
 
     public static void main(String[] args) {
 //        String html = readUrl("https://www.bookbao8.com/book/201805/29/id_XNTk5NTMz.html");
-        readListHtml(WebsiteEnum.BOOKBAO,"https://www.bookbao8.com/book/201805/29/id_XNTk5NTMz.html");
+        readListHtml(WebsiteChannel.BOOKBAO, "https://www.bookbao8.com/book/201805/29/id_XNTk5NTMz.html");
 
+    }
+
+    @Override
+    public <E extends CommonModel> ResponseObj process(E req) {
+        return null;
     }
 }

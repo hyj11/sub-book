@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<generatorConfiguration>
+    <!-- 引入配置文件 -->
+    <properties resource="application.properties"/>
+    <!--classPathEntry:数据库的JDBC驱动,换成你自己的驱动位置 可选 -->
+    <!--<classPathEntry location="/Users/hwatu/work/mavenJar/m2/repository/mysql/mysql-connector-java/5.1.38/mysql-connector-java-5.1.38.jar"/>-->
+
+    <!-- 一个数据库一个context -->
+    <!--defaultModelType="flat" 大数据字段，不分表 -->
+    <context id="MysqlTables" targetRuntime="MyBatis3" defaultModelType="flat">
+        <!-- autoDelimitKeywords自动识别数据库关键字，默认false，如果设置为true，根据SqlReservedWords中定义的关键字列表；
+             一般保留默认值，遇到数据库关键字（Java关键字），使用columnOverride覆盖 -->
+        <property name="autoDelimitKeywords" value="true"/>
+        <property name="beginningDelimiter" value="`"/>
+        <property name="endingDelimiter" value="`"/>
+        <property name="javaFileEncoding" value="utf-8"/>
+        <!-- 格式化java代码 -->
+        <property name="javaFormatter" value="org.mybatis.generator.api.dom.DefaultJavaFormatter"/>
+        <!-- 格式化XML代码 -->
+        <property name="xmlFormatter" value="org.mybatis.generator.api.dom.DefaultXmlFormatter"/>
+
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin"/>
+        <plugin type="org.mybatis.generator.plugins.ToStringPlugin"/>
+        <!--此处是将Example改名为Criteria 当然 想改成什么都行-->
+        <plugin type="org.mybatis.generator.plugins.RenameExampleClassPlugin">
+            <property name="searchString" value="Example$"/>
+            <property name="replaceString" value="Criteria"/>
+        </plugin>
+        <!-- 此处是将xxxMapper.xml改名为xxxDao.xml 当然 想改成什么都行~ -->
+        <!--<plugin type="org.mybatis.generator.plugins.rename.RenameSqlMapperPlugin">-->
+        <!--<property name="searchString" value="Mapper"/>-->
+        <!--<property name="replaceString" value="Dao"/>-->
+        <!--</plugin>-->
+        <!--     此处是将UserMapper改名为UserDao 接口 当然 想改成什么都行~  -->
+        <!--<plugin type="org.mybatis.generator.plugins.rename.RenameJavaMapperPlugin">-->
+        <!--<property name="searchString" value="Mapper$"/>-->
+        <!--<property name="replaceString" value="Dao"/>-->
+        <!--</plugin>-->
+
+        <!--插件具体地址：https://github.com/itfsw/mybatis-generator-plugin 可以学习写法，然后自己定义-->
+
+        <!-- 查询单条数据插件 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.SelectOneByExamplePlugin"/>
+        <!-- MySQL分页插件 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.LimitPlugin"/>
+        <!-- 数据Model链式构建插件 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.ModelBuilderPlugin"/>
+        <!-- Example Criteria 增强插件 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.ExampleEnhancedPlugin"/>
+        <!-- Example 目标包修改插件 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.ExampleTargetPlugin">
+            <!-- 修改Example类生成到目标包下 -->
+            <property name="targetPackage" value="${mysql.jdbc.criteria.package}"/>
+        </plugin>
+        <!-- 批量插入插件 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.BatchInsertPlugin"/>
+        <!-- 数据Model属性对应Column获取插件 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.ModelColumnPlugin"/>
+        <!-- 存在即更新插件 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.UpsertPlugin">
+            <!--
+            支持upsertByExample，upsertByExampleSelective操作
+            ！需开启allowMultiQueries=true多条sql提交操作，所以不建议使用！
+            -->
+            <property name="allowMultiQueries" value="true"/>
+        </plugin>
+        <!-- Selective选择插入更新增强插件！请配在所有插件末尾以便最后执行 -->
+        <plugin type="com.itfsw.mybatis.generator.plugins.SelectiveEnhancedPlugin"/>
+
+        <!-- 注释 -->
+        <commentGenerator>
+            <!--是否去除自动生成的注释 true：是 ： false:否-->
+            <property name="suppressAllComments" value="true"/>
+            <!-- 是否生成注释代时间戳-->
+            <property name="suppressDate" value="true"/>
+        </commentGenerator>
+
+        <!-- jdbc连接 -->
+        <jdbcConnection driverClass="${mysql.jdbc.driverClassName}" connectionURL="${mysql.jdbc.url}"
+                        userId="${mysql.jdbc.username}"
+                        password="${mysql.jdbc.password}"/>
+
+        <!-- 类型转换 -->
+        <!-- 非必需，类型处理器，在数据库类型和java类型之间的转换控制-->
+        <!-- 默认false，把JDBC DECIMAL 和 NUMERIC 类型解析为 Integer，为 true时把JDBC DECIMAL 和
+         NUMERIC 类型解析为java.math.BigDecimal -->
+        <javaTypeResolver>
+            <!-- 是否使用bigDecimal， false可自动转化以下类型（Long, Integer, Short, etc.） -->
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+
+        <!-- 生成实体类地址 -->
+        <javaModelGenerator targetPackage="${mysql.jdbc.model.package}"
+                            targetProject="src/main/java">
+            <!-- enableSubPackages:是否让schema作为包的后缀 -->
+            <property name="enableSubPackages" value="false"/>
+            <!-- 从数据库返回的值被清理前后的空格 -->
+            <property name="trimStrings" value="true"/>
+            <!-- 是否对model添加 构造函数 -->
+            <property name="constructorBased" value="true"/>
+            <!-- 建立的Model对象是否 不可改变  即生成的Model对象不会有 setter方法，只有构造方法 -->
+            <property name="immutable" value="false"/>
+        </javaModelGenerator>
+
+        <!-- 生成mapxml文件 -->
+        <sqlMapGenerator targetPackage="mappers" targetProject="src/main/resources">
+            <!-- enableSubPackages:是否让schema作为包的后缀 -->
+            <property name="enableSubPackages" value="false"/>
+        </sqlMapGenerator>
+
+        <!-- 生成mapxml对应client，也就是接口dao -->
+        <javaClientGenerator targetPackage="${mysql.jdbc.dao.package}" targetProject="src/main/java"
+                             type="XMLMAPPER">
+            <property name="enableSubPackages" value="false"/>
+        </javaClientGenerator>
+
+        <table tableName="tb_book_info" domainObjectName="TbBookInfo" enableCountByExample="true"
+               enableUpdateByExample="true"
+               enableDeleteByExample="true"
+               enableSelectByExample="true"
+               selectByExampleQueryId="true">
+            <property name="useActualColumnNames" value="false"/>
+            <generatedKey column="id`" sqlStatement="MySql" identity="true"/>
+        </table>
+    </context>
+</generatorConfiguration>
