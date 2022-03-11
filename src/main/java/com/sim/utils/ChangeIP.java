@@ -1,5 +1,6 @@
 package com.sim.utils;
 
+import com.closeli.utils.SigUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -97,5 +98,14 @@ public class ChangeIP {
             }
         }
         return ipAndPort;
+    }
+
+    public static void main(String[] args) {
+        try {
+            String a = SigUtils.signWithESDType("abc");
+            System.out.println(a);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
